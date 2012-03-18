@@ -457,7 +457,20 @@ def hostname():
     #   localhost
     #   domain
     grains = {}
-    grains['fqdn'] = socket.getfqdn()
+    grains.update(_kernel())
+    grains.update(os_data())
+    fqdn = socket.getfqdn()
+    if fqdn == "localhost" or '.' not in fqdn:
+        if grains['kernel'] == 'Windows':
+            # To be replaced with something better (looking at you, UtahDave)
+            fqdn = __salt__['cmd.run']('hostname').strip()
+        elif grains['kernel'] == 'sunos':
+            fqdn = __salt__['cmd.run']('hostname').strip()
+        elif grains['os'] == 'NetBSD':
+            fqdn = __salt__['cmd.run']('hostname').strip()
+        else:
+            fqdn = __salt__['cmd.run']('hostname -f').strip()
+    grains['fqdn'] = fqdn
     comps = grains['fqdn'].split('.')
     grains['host'] = comps[0]
     grains['localhost'] = socket.gethostname()
